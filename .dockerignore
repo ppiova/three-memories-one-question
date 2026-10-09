@@ -1,0 +1,6 @@
+# Only src/ and scenarios/ go into the image.
+*
+!src/
+!scenarios/
+**/bin/
+**/obj/

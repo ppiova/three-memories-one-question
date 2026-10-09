@@ -1,20 +1,25 @@
 name: three-memories
 
-# Everything the demo needs, on your machine, with no API keys:
-#   - Neo4j   -> the graph store used by AgentMemory for .NET
-#   - Ollama  -> a local chat model and a local embedding model
+# Everything the experiment needs, on your machine, with no API keys:
 #
-#   docker compose up -d        # first run downloads the images and the models
-#   docker compose logs models  # watch the model download
+#   neo4j   the graph store used by AgentMemory for .NET
+#   ollama  a local chat model and a local embedding model
+#   models  a one-shot job that downloads those two models
+#   demo    the experiment itself
 #
-# Ollama is published on host port 11435 so it does not collide with an Ollama
-# you may already have installed (which uses 11434).
+# Run it with:
+#
+#   docker compose run --rm demo
+#
+# The first run downloads the images and the models (about 20 GB) before it starts.
+# Ollama is published on host port 11435 so that it does not collide with an Ollama
+# you may already have installed, which uses 11434.
 
 services:
   neo4j:
     image: neo4j:5.26
     ports:
-      - "7474:7474" # Neo4j Browser -> http://localhost:7474
+      - "7474:7474" # Neo4j Browser: http://localhost:7474
       - "7687:7687" # Bolt
     environment:
       NEO4J_AUTH: neo4j/password
@@ -38,7 +43,7 @@ services:
       timeout: 10s
       retries: 30
 
-  # One-shot job: pulls the two models into the ollama volume, then exits.
+  # Pulls each model only if the volume does not have it yet, then exits.
   models:
     image: ollama/ollama:latest
     depends_on:
@@ -46,10 +51,39 @@ services:
         condition: service_healthy
     environment:
       OLLAMA_HOST: http://ollama:11434
+      EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-bge-m3}
+      CHAT_MODEL: ${OLLAMA_MODEL:-gemma3:12b}
     entrypoint: ["/bin/sh", "-c"]
     command:
-      - "ollama pull ${OLLAMA_EMBEDDING_MODEL:-bge-m3} && ollama pull ${OLLAMA_MODEL:-gemma3:12b}"
+      - |
+        for model in "$$EMBEDDING_MODEL" "$$CHAT_MODEL"; do
+          ollama show "$$model" > /dev/null 2>&1 || ollama pull "$$model" || exit 1
+        done
     restart: "no"
+
+  # Not started by `docker compose up`. `docker compose run --rm demo` starts what it
+  # depends on, waits for the models, and runs the experiment once.
+  demo:
+    image: ghcr.io/ppiova/three-memories-one-question:latest
+    build: .
+    profiles: ["demo"]
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      models:
+        condition: service_completed_successfully
+    # AgentMemory's provider layer accepts plain http only on loopback, so that an API key never
+    # travels in cleartext. Sharing Ollama's network puts it at 127.0.0.1, as on a laptop.
+    network_mode: "service:ollama"
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      OLLAMA_ENDPOINT: http://127.0.0.1:11434/v1
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma3:12b}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-bge-m3}
+    volumes:
+      - ./results:/app/results # the report of each run lands here
 
 volumes:
   neo4j-data:

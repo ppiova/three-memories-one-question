@@ -4,7 +4,7 @@
 
 What does an AI agent do with something you told it three months ago?
 
-This is a small experiment you can run on your own machine, with Docker and no API keys. One person tells an assistant 49 things over three months. Three kinds of agent memory hear all of it:
+This is a small experiment you can run on your own machine with one Docker command and no API keys. One person tells an assistant 49 things over three months. Three kinds of agent memory hear all of it:
 
 | Memory | Where it keeps what it hears | What it puts in the prompt when you ask |
 |---|---|---|
@@ -35,7 +35,7 @@ On December 4 she asks three things:
 
 ✓ the facts reached the prompt and the answer is right · ✗ a fact never reached the prompt, and nothing said so
 
-This is the reference run: `gemma3:12b` and `bge-m3` on a local Ollama, AgentMemory 1.9.0 with its Conversational preset, Neo4j 5.26. I ran it twice and got the same table. Every prompt and every answer is in [docs/reference-run.md](docs/reference-run.md).
+This is the reference run: `gemma3:12b` and `bge-m3` on a local Ollama, AgentMemory 1.9.0 with its Conversational preset, Neo4j 5.26. I ran it three times, one of them inside Docker, and got the same table every time. Every prompt and every answer is in [docs/reference-run.md](docs/reference-run.md).
 
 For the third question, all three memories produced a confident plan:
 
@@ -59,24 +59,18 @@ So the conclusion is not "use a graph", and it is not "don't". It is the line Jo
 
 ## Run it
 
-You need Docker and the .NET 10 SDK. An NVIDIA GPU with 12 GB or more makes it comfortable. Without one it runs on CPU, and I have not timed that.
+You need Docker. An NVIDIA GPU with 12 GB or more makes it comfortable. Without one it runs on CPU, and I have not timed that.
 
 ```bash
-docker compose up -d
+docker compose run --rm demo
 ```
 
-The first time, this downloads Neo4j, Ollama and two models (`bge-m3` and `gemma3:12b`): about 20 GB on disk. The models are ready when the `models` container exits; `docker compose logs -f models` shows the download.
+That one command starts Neo4j and Ollama, downloads two models (`bge-m3` and `gemma3:12b`) and runs the experiment. The first time it needs about 20 GB of disk and a while to download.
 
 With an NVIDIA GPU, use this instead:
 
 ```bash
-docker compose -f compose.yaml -f compose.gpu.yaml up -d
-```
-
-Then run the experiment:
-
-```bash
-dotnet run --project src/ThreeMemories
+docker compose -f compose.yaml -f compose.gpu.yaml run --rm demo
 ```
 
 On a laptop RTX 3080 Ti a run takes about five minutes, four of them the graph memory reading the 49 statements.
@@ -91,15 +85,32 @@ A run prints the scoreboard and writes three files to `results/`:
 
 To see the graph, open http://localhost:7474 (user `neo4j`, password `password`) and run the query the program prints at the end.
 
+When you are done, `docker compose down` stops everything and keeps the downloaded models.
+
+### The image
+
+The experiment's image is `ghcr.io/ppiova/three-memories-one-question`, built for amd64 and arm64 by the [workflow](.github/workflows/image.yml) in this repository. Compose pulls it, and builds it from the [Dockerfile](Dockerfile) if it cannot.
+
+The image runs as a non-root user. I ran it on Docker Desktop for Windows. On Linux, if the run cannot write its report, make the folder writable first with `mkdir -p results && chmod o+w results`.
+
+### With the .NET SDK
+
+To change the code and run it directly, you need the .NET 10 SDK:
+
+```bash
+docker compose up -d
+dotnet run --project src/ThreeMemories
+```
+
 ### Using other models
 
 Models are resolved by AgentMemory's own provider layer, so [its environment variables](https://github.com/joslat/agent-memory-dotnet/blob/main/docs/configuration/inference-providers.md) work here. With nothing set, the demo uses the Ollama that `compose.yaml` starts on port 11435.
 
 | To use | Set |
 |---|---|
-| an Ollama you already have | `OLLAMA_ENDPOINT=http://127.0.0.1:11434/v1`, and start only Neo4j with `docker compose up -d neo4j` |
-| another local model | `OLLAMA_MODEL`, both for `docker compose up` and for `dotnet run` |
-| a hosted model | `AI_INFERENCE_PROVIDER` and that provider's variables, as in the link above |
+| an Ollama you already have | `OLLAMA_ENDPOINT=http://127.0.0.1:11434/v1`, start only Neo4j with `docker compose up -d neo4j`, and run with `dotnet run` |
+| another local model | `OLLAMA_MODEL`, for Compose and, if you use it, for `dotnet run` |
+| a hosted model | `AI_INFERENCE_PROVIDER` and that provider's variables, as in the link above, and run with `dotnet run` |
 
 I have only run it with the local models above. If you change the embedding model, start from an empty Neo4j volume: the vector index is built for one embedding width.
 
@@ -127,6 +138,7 @@ The scenario is one JSON file, [scenarios/go-live.json](scenarios/go-live.json):
 ```bash
 dotnet run --project src/ThreeMemories -- --scenario path/to/yours.json
 dotnet run --project src/ThreeMemories -- --only file,vector   # skip the graph; no Neo4j needed
+docker compose run --rm demo --only file,vector               # the same, inside Docker
 ```
 
 The code is small on purpose:
