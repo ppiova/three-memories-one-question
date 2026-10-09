@@ -1,0 +1,7 @@
+# Keep line endings stable: the Compose file embeds a shell script, and a CR in it breaks the script.
+* text=auto
+*.yaml text eol=lf
+*.yml text eol=lf
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+*.json text eol=lf
