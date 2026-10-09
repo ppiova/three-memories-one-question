@@ -1,0 +1,15 @@
+# Optional: give the Ollama container an NVIDIA GPU.
+#
+#   docker compose -f compose.yaml -f compose.gpu.yaml up -d
+#
+# Without this file everything still works, on CPU, just slower.
+
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

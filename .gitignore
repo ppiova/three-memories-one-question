@@ -1,0 +1,11 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+
+# What a run writes. One reference run is kept in docs/.
+results/
+
+# Drafts and notes that are not part of the demo
+articulo/
