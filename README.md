@@ -16,7 +16,7 @@ Later, in a new conversation, each memory gets the same three questions, the sam
 
 ## Why I built it
 
-Jose Luis Latorre's Neo4j Live session, [AgentMemory for .NET: Persistent AI Agent Memory Engine](https://www.youtube.com/watch?v=yYPleJ635VY), has a slide I kept thinking about: one question, three memories, and a wrong answer that arrives without any error. I wanted to watch that happen on my own machine, with my own example, using his library as the graph memory.
+Jose Luis Latorre's Neo4j Live session, [AgentMemory for .NET: Persistent AI Agent Memory Engine](https://www.youtube.com/watch?v=yYPleJ635VY), has a slide I kept thinking about (he also presented the library in Spanish at [.NET Baires](https://www.youtube.com/watch?v=avSeR85brrY) on October 22, 2026): one question, three memories, and a wrong answer that arrives without any error. I wanted to watch that happen on my own machine, with my own example, using his library as the graph memory.
 
 The result was less tidy than the slide, and I think that makes it more useful.
 
@@ -51,7 +51,7 @@ What I take from it:
 
 - **The file** is right while the fact sits near the top. The trip was said in November, 785 tokens into a 1,049-token file, and the cut was at about 600.
 - **The vector store** finds what resembles the question, dates included. Asked about December 7 to 13, it brought the trip. Asked to plan go-live week, the trip does not resemble the question: it ranks so low that 706 of the 1,049 tokens would have been needed to reach it.
-- **The graph** stored the trip the way you would want it: `user · will be in · Bariloche`, valid from 2026-12-09 to 2026-12-13, with the dates as data. It still did not bring it back for the planning question, because recall starts from similarity there too, and then follows the graph one hop from what similarity found. The library's [memory map](https://github.com/joslat/agent-memory-dotnet/blob/main/docs/memory-map.md) says so in plain words.
+- **The graph** stored the trip the way you would want it: `user · will be in · Bariloche`, valid from 2026-12-09 to 2026-12-13, with the dates as data. It still did not bring it back for the planning question, because recall starts from similarity there too, and then follows the graph one hop from what similarity found. The library's [memory map](https://github.com/joslat/agent-memory-dotnet/blob/v1.9.0/docs/memory-map.md) says so in plain words.
 - **The graph also missed the first question.** The go-live date was stored, but it was not among the ten facts recall brought back, and the model answered "the go-live starts at 7 am".
 - **Writing is where a graph memory loses things.** The model that reads each statement, a local 12B one here, stored the wedding as "December 3" instead of December 12 and wrote that Sofía works at Acme, her client. Eight relationships it extracted were not stored because one of their ends was not an entity. A stronger model will extract better. You only find out by looking.
 
@@ -104,7 +104,7 @@ dotnet run --project src/ThreeMemories
 
 ### Using other models
 
-Models are resolved by AgentMemory's own provider layer, so [its environment variables](https://github.com/joslat/agent-memory-dotnet/blob/main/docs/configuration/inference-providers.md) work here. With nothing set, the demo uses the Ollama that `compose.yaml` starts on port 11435.
+Models are resolved by AgentMemory's own provider layer, so [its environment variables](https://github.com/joslat/agent-memory-dotnet/blob/v1.9.0/docs/configuration/inference-providers.md) work here. With nothing set, the demo uses the Ollama that `compose.yaml` starts on port 11435.
 
 | To use | Set |
 |---|---|
@@ -130,6 +130,7 @@ Token counts are estimates: characters divided by four.
 - **Not full size.** 49 statements stand in for months of real use. At this size the whole history fits in any context window, and a file loaded whole would pass every question. The experiment is about the day it no longer fits.
 - **Not the best file or vector memory.** They are the simplest honest versions: a file read from the top, and cosine similarity over the raw statements. Real ones add summaries, reranking and metadata filters.
 - **Not independent of the model.** What the graph holds depends on the model that reads each statement.
+- **Not the latest code.** It was measured with AgentMemory 1.9.0, still the latest on NuGet on October 22, 2026. The library's main branch already has unreleased, opt-in changes to how memories are written. When a new version ships I will run it again.
 
 ## Make it yours
 

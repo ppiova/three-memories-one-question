@@ -16,7 +16,7 @@ Después, en una conversación nueva, cada memoria recibe las mismas tres pregun
 
 ## Por qué lo hice
 
-La sesión de Neo4j Live de Jose Luis Latorre, [AgentMemory for .NET: Persistent AI Agent Memory Engine](https://www.youtube.com/watch?v=yYPleJ635VY), tiene una slide que me quedó dando vueltas: una pregunta, tres memorias, y una respuesta equivocada que llega sin ningún error. Quise verlo pasar en mi máquina, con un ejemplo mío, usando su librería como memoria de grafo.
+La sesión de Neo4j Live de Jose Luis Latorre, [AgentMemory for .NET: Persistent AI Agent Memory Engine](https://www.youtube.com/watch?v=yYPleJ635VY), tiene una slide que me quedó dando vueltas (también presentó la librería en español en [.NET Baires](https://www.youtube.com/watch?v=avSeR85brrY) el 22 de octubre de 2026): una pregunta, tres memorias, y una respuesta equivocada que llega sin ningún error. Quise verlo pasar en mi máquina, con un ejemplo mío, usando su librería como memoria de grafo.
 
 El resultado fue menos prolijo que la slide, y creo que por eso sirve más.
 
@@ -51,7 +51,7 @@ Lo que me llevo:
 
 - **El archivo** acierta mientras el dato esté cerca del principio. El viaje se dijo en noviembre, a 785 tokens del inicio de un archivo de 1.049, y el corte estaba cerca de los 600.
 - **El vector store** encuentra lo que se parece a la pregunta, fechas incluidas. Cuando le preguntaron por el 7 al 13 de diciembre, trajo el viaje. Cuando le pidieron planificar la semana de la salida, el viaje no se parece a la pregunta: queda tan abajo en el ranking que hacían falta 706 de los 1.049 tokens para alcanzarlo.
-- **El grafo** guardó el viaje como uno querría: `user · will be in · Bariloche`, válido del 2026-12-09 al 2026-12-13, con las fechas como dato. Igual no lo trajo para la pregunta de planificación, porque ahí el recall también arranca por similitud y después sigue el grafo un salto desde lo que la similitud encontró. El [mapa de memoria](https://github.com/joslat/agent-memory-dotnet/blob/main/docs/memory-map.md) de la librería lo dice sin vueltas.
+- **El grafo** guardó el viaje como uno querría: `user · will be in · Bariloche`, válido del 2026-12-09 al 2026-12-13, con las fechas como dato. Igual no lo trajo para la pregunta de planificación, porque ahí el recall también arranca por similitud y después sigue el grafo un salto desde lo que la similitud encontró. El [mapa de memoria](https://github.com/joslat/agent-memory-dotnet/blob/v1.9.0/docs/memory-map.md) de la librería lo dice sin vueltas.
 - **El grafo también falló la primera pregunta.** La fecha de la salida estaba guardada, pero no quedó entre los diez hechos que trajo el recall, y el modelo respondió "the go-live starts at 7 am".
 - **Al escribir es donde una memoria de grafo pierde cosas.** El modelo que lee cada frase, acá uno local de 12B, guardó el casamiento como "December 3" en vez del 12 de diciembre y anotó que Sofía trabaja en Acme, que es su cliente. Ocho relaciones que extrajo no se guardaron porque uno de sus extremos no era una entidad. Un modelo más fuerte va a extraer mejor. Solo te enterás mirando.
 
@@ -104,7 +104,7 @@ dotnet run --project src/ThreeMemories
 
 ### Usar otros modelos
 
-Los modelos los resuelve la capa de proveedores de AgentMemory, así que acá valen [sus variables de entorno](https://github.com/joslat/agent-memory-dotnet/blob/main/docs/configuration/inference-providers.md). Sin configurar nada, la demo usa el Ollama que `compose.yaml` levanta en el puerto 11435.
+Los modelos los resuelve la capa de proveedores de AgentMemory, así que acá valen [sus variables de entorno](https://github.com/joslat/agent-memory-dotnet/blob/v1.9.0/docs/configuration/inference-providers.md). Sin configurar nada, la demo usa el Ollama que `compose.yaml` levanta en el puerto 11435.
 
 | Para usar | Configurá |
 |---|---|
@@ -130,6 +130,7 @@ Los tokens son estimados: caracteres dividido cuatro.
 - **No es tamaño real.** 49 frases representan meses de uso real. A este tamaño toda la historia entra en cualquier ventana de contexto, y un archivo cargado entero acertaría todas las preguntas. El experimento es sobre el día en que ya no entra.
 - **No son la mejor memoria de archivo ni la mejor vectorial.** Son las versiones honestas más simples: un archivo leído desde arriba y similitud coseno sobre las frases crudas. Las reales suman resúmenes, reranking y filtros por metadatos.
 - **No es independiente del modelo.** Lo que queda en el grafo depende del modelo que lee cada frase.
+- **No es el código más nuevo.** Se midió con AgentMemory 1.9.0, que el 22 de octubre de 2026 sigue siendo la última versión en NuGet. La rama principal de la librería ya tiene cambios opcionales, todavía sin publicar, en cómo se escriben los recuerdos. Cuando salga una versión nueva lo vuelvo a correr.
 
 ## Hacelo tuyo
 
