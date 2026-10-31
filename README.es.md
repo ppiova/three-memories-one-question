@@ -22,7 +22,7 @@ El resultado fue menos prolijo que la slide, y creo que por eso sirve más.
 
 ## Qué pasó
 
-Sofía es tech lead. En septiembre cuenta que lidera una salida a producción, presencial en Córdoba, el 11 de diciembre. En noviembre comenta, como novedad personal, que va a estar en Bariloche del 9 al 13 de diciembre por el casamiento de su hermana. Las dos frases están en la misma memoria y nadie las pone nunca una al lado de la otra.
+Bruna es tech lead. En septiembre cuenta que lidera una salida a producción, presencial en Córdoba, el 11 de diciembre. En noviembre comenta, como novedad personal, que va a estar en Bariloche del 9 al 13 de diciembre por el casamiento de su hermana. Las dos frases están en la misma memoria y nadie las pone nunca una al lado de la otra.
 
 El 4 de diciembre pregunta tres cosas:
 
@@ -35,17 +35,17 @@ El 4 de diciembre pregunta tres cosas:
 
 ✓ los datos llegaron al prompt y la respuesta es correcta · ✗ un dato nunca llegó al prompt, y nada lo avisó
 
-Esta es la corrida de referencia: `gemma3:12b` y `bge-m3` en un Ollama local, AgentMemory 1.9.0 con su preset Conversational, Neo4j 5.26. La corrí tres veces, una de ellas dentro de Docker, y dio siempre la misma tabla. Todos los prompts y todas las respuestas están en [docs/reference-run.md](docs/reference-run.md). El escenario y las respuestas están en inglés.
+Esta es la corrida de referencia: `gemma3:12b` y `bge-m3` en un Ollama local, AgentMemory 1.9.0 con su preset Conversational, Neo4j 5.26. La corrí tres veces dentro de Docker y dio siempre la misma tabla. Todos los prompts y todas las respuestas están en [docs/reference-run.md](docs/reference-run.md). El escenario y las respuestas están en inglés.
 
 Para la tercera pregunta, las tres memorias produjeron un plan seguro de sí mismo:
 
 > **file:** Okay, here's a plan for go-live week (December 8-11, 2026) for the Acme Logistics billing system…
 >
-> **vector:** Okay, here's a plan for go-live week, December 7-11, 2026, for the Acme Logistics billing system…
+> **vector:** Okay, here's a plan for go-live week, starting December 8, 2026, for the Acme Logistics billing system…
 >
 > **graph:** Okay, here's a plan for go-live week, focusing on your priorities…
 
-Ninguno menciona que esa semana Sofía va a estar en un casamiento en otra ciudad. Eso es fallar en silencio: no es un error, es una respuesta prolija armada con lo que justo había en el prompt.
+Ninguno menciona que esa semana Bruna va a estar en un casamiento en otra ciudad. Eso es fallar en silencio: no es un error, es una respuesta prolija armada con lo que justo había en el prompt.
 
 Lo que me llevo:
 
@@ -53,7 +53,7 @@ Lo que me llevo:
 - **El vector store** encuentra lo que se parece a la pregunta, fechas incluidas. Cuando le preguntaron por el 7 al 13 de diciembre, trajo el viaje. Cuando le pidieron planificar la semana de la salida, el viaje no se parece a la pregunta: queda tan abajo en el ranking que hacían falta 706 de los 1.049 tokens para alcanzarlo.
 - **El grafo** guardó el viaje como uno querría: `user · will be in · Bariloche`, válido del 2026-12-09 al 2026-12-13, con las fechas como dato. Igual no lo trajo para la pregunta de planificación, porque ahí el recall también arranca por similitud y después sigue el grafo un salto desde lo que la similitud encontró. El [mapa de memoria](https://github.com/joslat/agent-memory-dotnet/blob/v1.9.0/docs/memory-map.md) de la librería lo dice sin vueltas.
 - **El grafo también falló la primera pregunta.** La fecha de la salida estaba guardada, pero no quedó entre los diez hechos que trajo el recall, y el modelo respondió "the go-live starts at 7 am".
-- **Al escribir es donde una memoria de grafo pierde cosas.** El modelo que lee cada frase, acá uno local de 12B, guardó el casamiento como "December 3" en vez del 12 de diciembre y anotó que Sofía trabaja en Acme, que es su cliente. Ocho relaciones que extrajo no se guardaron porque uno de sus extremos no era una entidad. Un modelo más fuerte va a extraer mejor. Solo te enterás mirando.
+- **Al escribir es donde una memoria de grafo pierde cosas.** El modelo que lee cada frase, acá uno local de 12B, guardó el casamiento como "December 3" en vez del 12 de diciembre y anotó que Bruna trabaja en Acme, que es su cliente. Ocho relaciones que extrajo no se guardaron porque uno de sus extremos no era una entidad. Un modelo más fuerte va a extraer mejor. Solo te enterás mirando.
 
 Entonces la conclusión no es "usá un grafo", y tampoco "no lo uses". Es la frase con la que Jose cierra su charla: la memoria no debería fallar en silencio, así que hay que mirarla y medirla. Mudar la memoria a otro lado no te ahorra mirar qué llegó al prompt.
 
@@ -73,7 +73,7 @@ Con GPU NVIDIA, usá este en su lugar:
 docker compose -f compose.yaml -f compose.gpu.yaml run --rm demo
 ```
 
-En una RTX 3080 Ti de notebook una corrida tarda unos cinco minutos, cuatro de ellos la memoria de grafo leyendo las 49 frases.
+En una RTX 3080 Ti de notebook una corrida tarda entre cinco y ocho minutos, casi todo la memoria de grafo leyendo las 49 frases.
 
 Cada corrida imprime la tabla y escribe tres archivos en `results/`:
 

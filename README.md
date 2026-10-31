@@ -22,7 +22,7 @@ The result was less tidy than the slide, and I think that makes it more useful.
 
 ## What happened
 
-Sofía is a tech lead. In September she says she is leading a go-live, on-site in Córdoba, on December 11. In November she mentions, as personal news, that she will be in Bariloche from December 9 to 13 for her sister's wedding. Both statements are in the same memory and nobody ever puts them side by side.
+Bruna is a tech lead. In September she says she is leading a go-live, on-site in Córdoba, on December 11. In November she mentions, as personal news, that she will be in Bariloche from December 9 to 13 for her sister's wedding. Both statements are in the same memory and nobody ever puts them side by side.
 
 On December 4 she asks three things:
 
@@ -35,17 +35,17 @@ On December 4 she asks three things:
 
 ✓ the facts reached the prompt and the answer is right · ✗ a fact never reached the prompt, and nothing said so
 
-This is the reference run: `gemma3:12b` and `bge-m3` on a local Ollama, AgentMemory 1.9.0 with its Conversational preset, Neo4j 5.26. I ran it three times, one of them inside Docker, and got the same table every time. Every prompt and every answer is in [docs/reference-run.md](docs/reference-run.md).
+This is the reference run: `gemma3:12b` and `bge-m3` on a local Ollama, AgentMemory 1.9.0 with its Conversational preset, Neo4j 5.26. I ran it three times inside Docker and got the same table every time. Every prompt and every answer is in [docs/reference-run.md](docs/reference-run.md).
 
 For the third question, all three memories produced a confident plan:
 
 > **file:** Okay, here's a plan for go-live week (December 8-11, 2026) for the Acme Logistics billing system…
 >
-> **vector:** Okay, here's a plan for go-live week, December 7-11, 2026, for the Acme Logistics billing system…
+> **vector:** Okay, here's a plan for go-live week, starting December 8, 2026, for the Acme Logistics billing system…
 >
 > **graph:** Okay, here's a plan for go-live week, focusing on your priorities…
 
-None of them mentions that Sofía will be at a wedding in another city that week. That is what failing silently looks like: not an error, but a good-looking answer built on whatever happened to be in the prompt.
+None of them mentions that Bruna will be at a wedding in another city that week. That is what failing silently looks like: not an error, but a good-looking answer built on whatever happened to be in the prompt.
 
 What I take from it:
 
@@ -53,7 +53,7 @@ What I take from it:
 - **The vector store** finds what resembles the question, dates included. Asked about December 7 to 13, it brought the trip. Asked to plan go-live week, the trip does not resemble the question: it ranks so low that 706 of the 1,049 tokens would have been needed to reach it.
 - **The graph** stored the trip the way you would want it: `user · will be in · Bariloche`, valid from 2026-12-09 to 2026-12-13, with the dates as data. It still did not bring it back for the planning question, because recall starts from similarity there too, and then follows the graph one hop from what similarity found. The library's [memory map](https://github.com/joslat/agent-memory-dotnet/blob/v1.9.0/docs/memory-map.md) says so in plain words.
 - **The graph also missed the first question.** The go-live date was stored, but it was not among the ten facts recall brought back, and the model answered "the go-live starts at 7 am".
-- **Writing is where a graph memory loses things.** The model that reads each statement, a local 12B one here, stored the wedding as "December 3" instead of December 12 and wrote that Sofía works at Acme, her client. Eight relationships it extracted were not stored because one of their ends was not an entity. A stronger model will extract better. You only find out by looking.
+- **Writing is where a graph memory loses things.** The model that reads each statement, a local 12B one here, stored the wedding as "December 3" instead of December 12 and wrote that Bruna works at Acme, her client. Eight relationships it extracted were not stored because one of their ends was not an entity. A stronger model will extract better. You only find out by looking.
 
 So the conclusion is not "use a graph", and it is not "don't". It is the line Jose closes his talk with: memory shouldn't fail silently, so watch it and measure it. Moving the memory somewhere else does not spare you from looking at what reached the prompt.
 
@@ -73,7 +73,7 @@ With an NVIDIA GPU, use this instead:
 docker compose -f compose.yaml -f compose.gpu.yaml run --rm demo
 ```
 
-On a laptop RTX 3080 Ti a run takes about five minutes, four of them the graph memory reading the 49 statements.
+On a laptop RTX 3080 Ti a run takes five to eight minutes, most of it the graph memory reading the 49 statements.
 
 A run prints the scoreboard and writes three files to `results/`:
 

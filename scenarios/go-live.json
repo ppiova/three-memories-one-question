@@ -1,15 +1,15 @@
 {
   "name": "go-live",
   "title": "Three months of chat with a tech lead, then three questions",
-  "owner": "sofia",
-  "assistantBrief": "You are the personal assistant of Sofía, a tech lead.",
+  "owner": "bruna",
+  "assistantBrief": "You are the personal assistant of Bruna, a tech lead.",
   "askedOn": "2026-12-04",
   "sessions": [
     {
       "date": "2026-09-07",
       "topic": "Kickoff",
       "messages": [
-        "Hi! I'm Sofía, tech lead at Nexo, a small software studio in Buenos Aires.",
+        "Hi! I'm Bruna, tech lead at Nexo, a small software studio in Buenos Aires.",
         "We just signed with Acme Logistics. I'm leading the go-live of their new billing system on Friday, December 11.",
         "The cutover happens on-site at Acme's office in Córdoba, and I have to be there in person to run it.",
         "My manager is Martín. He wants a status update every Monday morning.",
